@@ -12,7 +12,7 @@ RUN npm install
 COPY . .
 
 # Ensure .env is copied inside the container
-COPY .env .env
+# COPY .env .env
 
 # Expose the API port
 EXPOSE 5000
