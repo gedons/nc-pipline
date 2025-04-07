@@ -1,0 +1,7 @@
+chat-app/
+node_modules/
+tests/
+git/
+.env
+client-simulation.js
+package-lock.json

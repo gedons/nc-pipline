@@ -1,0 +1,6 @@
+chat-app/
+tests/
+node_modules
+client-simulation.js
+npm-debug.log
+uploads
