@@ -1,25 +1,10 @@
-version: '3.8'
-
 services:
-  backend:
+  api:
     build: .
-    container_name: chat_api
     ports:
-      - "5000:5000"
-    depends_on:
-      - mongo
+      - "3000:3000"
     env_file:
-      - .env  
-    restart: always
-
-  mongo:
-    image: mongo:6.0
-    container_name: chat_db
-    ports:
-      - "27017:27017"
+      - .env
     volumes:
-      - mongo_data:/data/db
-    restart: always
-
-volumes:
-  mongo_data:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules

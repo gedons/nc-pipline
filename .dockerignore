@@ -4,3 +4,6 @@ node_modules
 client-simulation.js
 npm-debug.log
 uploads
+.env
+.git
+.gitignore
