@@ -19,17 +19,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Generate Docker Image
+      - name: Build Docker Image
         run: docker build -t nodechat-api .
 
       - name: Login to AWS Elastic Container Registry (ECR)
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin <your-aws-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       - name: Tag and Push Docker Image to ECR
         run: |
-          docker tag nodechat-api <your-aws-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/nodechat-api
-          docker push <your-aws-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/nodechat-api
+          docker tag nodechat-api ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/nodechat-api:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/nodechat-api:latest
+
+      - name: Create Deployment Package
+        run: |
+          echo '{"AWSEBDockerrunVersion":"1","Image":{"Name":"${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/nodechat-api:latest","Update":"true"}}' > Dockerrun.aws.json
+          zip -r deploy.zip Dockerrun.aws.json
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
@@ -40,4 +46,4 @@ jobs:
           environment_name: nodechat-api-env
           region: ${{ secrets.AWS_REGION }}
           version_label: ${{ github.sha }}
-          deployment_package: Dockerfile
+          deployment_package: deploy.zip
