@@ -13,9 +13,6 @@ RUN npm install --only=production
 # Copy the rest of the application code
 COPY . .
 
-# Copy the .env file
-COPY .env .env
-
 # Expose the port Elastic Beanstalk will use
 EXPOSE 3000
 
