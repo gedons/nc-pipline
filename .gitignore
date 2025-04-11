@@ -5,3 +5,8 @@ git/
 .env
 client-simulation.js
 package-lock.json
+aws-infrastructure.yml
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

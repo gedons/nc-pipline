@@ -2,6 +2,7 @@ chat-app/
 tests/
 node_modules
 client-simulation.js
+aws-infrastructure.yml
 npm-debug.log
 uploads
 .env
