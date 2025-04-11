@@ -1,19 +1,23 @@
-# Use an official Node.js runtime as base image
+# Use an official Node.js runtime as a parent image
 FROM node:18-alpine
 
-# Set working directory inside container
-WORKDIR /usr/src/app
+# Set the working directory
+WORKDIR /app
 
-# Copy package.json and install dependencies
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-RUN npm install
+# Install dependencies
+RUN npm install --only=production
 
-# Copy the rest of the application files
+# Copy the rest of the application code
 COPY . .
 
-# Expose the API port
+# Copy the .env file
+COPY .env .env
+
+# Expose the port Elastic Beanstalk will use
 EXPOSE 3000
 
-# Start the app
-CMD ["npm", "start"]
+# Start the application
+CMD ["node", "server.js"]
