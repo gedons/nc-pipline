@@ -20,7 +20,7 @@ app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok 200' });
+  res.status(200).json({ status: 'API OK' });
 });
 
 
