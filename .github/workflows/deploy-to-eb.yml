@@ -20,21 +20,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Ensure ECR repo exists
-        run: |
-          aws ecr describe-repositories \
-            --repository-names ${{ secrets.ECR_REPOSITORY }} \
-            --region ${{ secrets.AWS_REGION }} \
-          || aws ecr create-repository \
-            --repository-name ${{ secrets.ECR_REPOSITORY }} \
-            --region ${{ secrets.AWS_REGION }}
-
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
@@ -45,10 +33,26 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Generate Docker authentication config
+        run: |
+          mkdir -p .aws
+          token=$(aws ecr get-login-password --region ${{ secrets.AWS_REGION }})
+          echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" > .aws/credentials
+          echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .aws/credentials
+          echo "aws_session_token=$token" >> .aws/credentials
+
+      - name: Upload credentials to S3
+        run: |
+          aws s3 cp .aws/credentials s3://elasticbeanstalk-${{ secrets.AWS_REGION }}-${{ secrets.AWS_ACCOUNT_ID }}/.aws/credentials
+
       - name: Generate Dockerrun.aws.json
         run: |
           echo '{
-            "AWSEBDockerrunVersion": "1",
+            "AWSEBDockerrunVersion": "2",
+            "Authentication": {
+              "Bucket": "elasticbeanstalk-${{ secrets.AWS_REGION }}-${{ secrets.AWS_ACCOUNT_ID }}",
+              "Key": ".aws/credentials"
+            },
             "Image": {
               "Name": "${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}",
               "Update": "true"
@@ -72,4 +76,3 @@ jobs:
           version_label: "app-${{ github.sha }}"
           deployment_package: Dockerrun.aws.json
           wait_for_deployment: true
-          use_existing_version_if_available: true
