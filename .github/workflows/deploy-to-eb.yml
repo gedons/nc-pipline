@@ -63,3 +63,4 @@ jobs:
           version_label: "app-${{ github.sha }}"
           deployment_package: Dockerrun.aws.json
           wait_for_deployment: true
+          use_existing_version_if_available: true
