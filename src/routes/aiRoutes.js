@@ -1,15 +1,12 @@
-// routes/aiRoutes.js
 const express = require('express');
 const router = express.Router();
-const { HfInference } = require('@huggingface/inference');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Get your Hugging Face API key from your .env file
-const hfApiKey = process.env.HF_API_KEY;
-if (!hfApiKey) {
-  console.error("HF_API_KEY is not defined in the environment variables");
-}
-
-const client = new HfInference(hfApiKey);
+// Initialize Gemini API
+// It is recommended to use environment variables for API keys
+const apiKey = process.env.GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 /**
  * POST /api/ai/chat
@@ -23,41 +20,44 @@ const client = new HfInference(hfApiKey);
  */
 router.post('/chat', async (req, res) => {
   const { messages } = req.body;
-  
+
   // Check that "messages" is provided and is an array.
-  if (!messages || !Array.isArray(messages)) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Invalid messages format. Expected an array of messages.' 
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid messages format. Expected a non-empty array of messages.'
     });
   }
 
   try {
-    // Call the Hugging Face Inference API using the provided model.
-    const response = await client.chatCompletion({
-      model: "deepseek-ai/DeepSeek-R1",
-      messages: messages,
-      provider: "fireworks-ai", 
-      max_tokens: 500,
+    // Prepare history for Gemini
+    // The last message is the new prompt, previous ones are history
+    const history = messages.slice(0, -1).map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }));
+
+    const lastMessage = messages[messages.length - 1].content;
+
+    const chat = model.startChat({
+      history: history,
     });
 
-    if (response.choices && response.choices.length > 0) {
-      return res.json({ 
-        success: true, 
-        message: response.choices[0].message 
-      });
-    } else {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'No response from model' 
-      });
-    }
+    const result = await chat.sendMessage(lastMessage);
+    const response = await result.response;
+    const text = response.text();
+
+    return res.json({
+      success: true,
+      data: { role: "assistant", content: text }
+    });
+
   } catch (error) {
-    console.error("Error calling Hugging Face Inference API:", error);
-    return res.status(500).json({ 
-      success: false, 
-      message: "Error generating AI response", 
-      error: error.message 
+    console.error("Error calling Gemini API:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error generating AI response",
+      error: error.message
     });
   }
 });

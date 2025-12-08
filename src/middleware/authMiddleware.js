@@ -6,7 +6,7 @@ module.exports = (req, res, next) => {
 
   // Check if Authorization header is present and starts with 'Bearer '
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
+    return res.status(401).json({ success: false, message: 'No token, authorization denied' });
   }
 
   // Extract the token (remove 'Bearer ' prefix)
@@ -17,6 +17,6 @@ module.exports = (req, res, next) => {
     req.user = decoded.userId;  // Attach user ID to request object
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
+    res.status(401).json({ success: false, message: 'Invalid token' });
   }
 };

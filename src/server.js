@@ -2,7 +2,7 @@ require('dotenv').config();
 const http = require('http');
 const connectDB = require('./config/db');
 const { Server } = require('socket.io');
-const socketHandler = require('./sockets/chatSocket');
+const socketHandler = require('./sockets');
 const express = require('express');
 const cors = require('cors');
 
@@ -34,6 +34,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: 'https://reatime-chat.vercel.app', 
+    //origin: 'http://localhost:5173',
     methods: ['GET', 'POST'],
   },
 });

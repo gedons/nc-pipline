@@ -1,15 +1,20 @@
 const cloudinary = require('../config/cloudinaryConfig');
 const streamifier = require('streamifier');
 
+/**
+ * Upload a file to Cloudinary
+ * @route POST /api/upload
+ * @access Private
+ */
 exports.uploadFile = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file provided' });
     }
-    
+
     const timestamp = Math.floor(Date.now() / 1000);
     const resourceType = req.file.mimetype.startsWith('audio') ? 'video' : 'auto';
-    
+
     let streamUpload = (req) => {
       return new Promise((resolve, reject) => {
         let stream = cloudinary.uploader.upload_stream(
@@ -31,11 +36,13 @@ exports.uploadFile = async (req, res) => {
     };
 
     const result = await streamUpload(req);
-    console.log('[uploadFile] Cloudinary upload result:', result);
-    res.status(200).json({ 
-      success: true, 
-      fileUrl: result.secure_url,
-      public_id: result.public_id 
+    // console.log('[uploadFile] Cloudinary upload result:', result);
+    res.status(200).json({
+      success: true,
+      data: {
+        fileUrl: result.secure_url,
+        public_id: result.public_id
+      }
     });
   } catch (error) {
     console.error('[uploadFile] Error uploading file:', error);
