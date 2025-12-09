@@ -78,6 +78,13 @@ exports.createChat = async (req, res) => {
     });
 
     await newChat.save();
+
+    // Invalidate cache for all participants
+    for (const pId of participantIds) {
+      await redisClient.del(`userChats:${pId}`);
+      await redisClient.del(`pendingChats:${pId}`);
+    }
+
     res.status(201).json({ success: true, data: newChat });
   } catch (error) {
     res.status(500).json({
@@ -105,6 +112,10 @@ exports.createAIChat = async (req, res) => {
       status: 'accepted'
     });
     await newChat.save();
+
+    // Invalidate cache
+    await redisClient.del(`userChats:${userId}`);
+
     res.status(201).json({ success: true, data: newChat });
   } catch (error) {
     console.error("Error creating AI chat:", error);
@@ -139,6 +150,12 @@ exports.acceptChat = async (req, res) => {
 
     chat.status = 'accepted';
     await chat.save();
+
+    // Invalidate cache for all participants
+    for (const pId of chat.participants) {
+      await redisClient.del(`userChats:${pId}`);
+      await redisClient.del(`pendingChats:${pId}`);
+    }
 
     res.status(200).json({ success: true, message: 'Chat accepted successfully', data: chat });
   } catch (error) {
@@ -205,7 +222,9 @@ exports.getUserChats = async (req, res) => {
       .lean();
 
     if (!chats.length) {
-      return res.status(404).json({ success: false, message: 'No chats found' });
+      // Cache empty result
+      await redisClient.setEx(cacheKey, 60, JSON.stringify([]));
+      return res.status(200).json({ success: true, data: [] });
     }
 
     // Fetch messages for each chat
@@ -246,6 +265,12 @@ exports.deleteChat = async (req, res) => {
 
     await Message.deleteMany({ chatId });
     await Chat.findByIdAndDelete(chatId);
+
+    // Invalidate cache for all participants
+    for (const pId of chat.participants) {
+      await redisClient.del(`userChats:${pId}`);
+      await redisClient.del(`pendingChats:${pId}`);
+    }
 
     res.status(200).json({ success: true, message: 'Chat deleted successfully' });
   } catch (error) {
