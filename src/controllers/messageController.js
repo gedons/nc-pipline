@@ -50,6 +50,9 @@ exports.sendMessage = async (req, res) => {
     // Populate Sender Field (for frontend)
     const populatedMessage = await Message.findById(newMessage._id).populate('sender', 'username _id');
 
+    // Invalidate messages cache
+    await redisClient.del(`messages:${chatId}`);
+
     res.status(201).json({ success: true, data: populatedMessage });
   } catch (error) {
     console.error("Error sending message:", error);

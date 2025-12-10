@@ -113,6 +113,11 @@ exports.createAIChat = async (req, res) => {
     });
     await newChat.save();
 
+    await newChat.save();
+
+    // Populate the participants field
+    await newChat.populate('participants', 'email username lastSeen');
+
     // Invalidate cache
     await redisClient.del(`userChats:${userId}`);
 
